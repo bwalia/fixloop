@@ -4,6 +4,9 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+### Fixed
+- DCO check now skips commits authored by Dependabot, which cannot sign off.
+
 ### Phase 0: Skeleton
 
 #### Added
