@@ -5,6 +5,7 @@ All notable changes to this project are documented here. The format follows [Kee
 ## [Unreleased]
 
 ### Fixed
+- Scorecard workflow referenced a non-existent `v2` tag of `ossf/scorecard-action`; it is now pinned to v2.5.0 by commit SHA.
 - DCO check now skips commits authored by Dependabot, which cannot sign off.
 
 ### Phase 0: Skeleton
