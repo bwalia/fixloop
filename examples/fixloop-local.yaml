@@ -1,0 +1,17 @@
+# Fully offline: only a local Ollama server. No outside AI API is ever called.
+# Try it: fixloop --config examples/fixloop-local.yaml llm test
+llm:
+  offline: true
+  providers:
+    ollama: { kind: openai_compatible, preset: ollama }
+  models:
+    qwen-small:
+      provider: ollama
+      model: "qwen3:4b-instruct-2507-q4_K_M"
+    llama-small:
+      provider: ollama
+      model: "llama3.2:3b"
+      tool_mode: json        # describe tools in the prompt instead of native tool calls
+  routes:
+    review: [qwen-small, llama-small]
+    triage: [llama-small]
