@@ -1,0 +1,16 @@
+[package]
+name = "fixloop-agents"
+description = "Reviewer, Fixer and Bug Fixer agents, prompts and context building."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+authors.workspace = true
+publish = false
+
+[dependencies]
+
+[lints]
+workspace = true

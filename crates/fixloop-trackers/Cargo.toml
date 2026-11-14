@@ -1,0 +1,16 @@
+[package]
+name = "fixloop-trackers"
+description = "Issue tracker and error tracker adapters: GitHub Issues, Jira, Linear, Bugzilla, Azure Boards, Sentry."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+authors.workspace = true
+publish = false
+
+[dependencies]
+
+[lints]
+workspace = true
