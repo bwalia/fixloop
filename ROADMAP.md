@@ -4,8 +4,8 @@ The detailed plan lives in [docs/PLAN.md](docs/PLAN.md). Progress is tracked in 
 
 | Phase | Goal | Status |
 |---|---|---|
-| 0 | Skeleton: workspace, CI, license, CNCF files, config, logging, tracing | **In progress** |
-| 1 | LLM layer: provider trait, Anthropic, OpenAI, OpenAI-compatible (Ollama/vLLM), routing, budgets | Planned |
+| 0 | Skeleton: workspace, CI, license, CNCF files, config, logging, tracing | Done |
+| 1 | LLM layer: provider trait, Anthropic, OpenAI, OpenAI-compatible (Ollama/vLLM), routing, budgets | Done |
 | 2 | Reviewer: GitHub App, webhooks, inline review comments, check runs | Planned |
 | 3 | Issue filing: GitHub Issues + Jira, dedupe, two-way links | Planned |
 | 4 | Sandbox + Fixer: Docker and Kubernetes runners, test-gated fix PRs | Planned |
