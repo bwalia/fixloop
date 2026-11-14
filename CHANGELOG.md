@@ -4,6 +4,22 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+### Phase 1: LLM layer
+
+#### Added
+- `fixloop-llm`: `LlmProvider` trait with Anthropic, OpenAI and OpenAI-compatible providers (Ollama, vLLM, llama.cpp, LM Studio, NVIDIA NIM presets).
+- Router with per-task routes, ordered fallback, retries with backoff, `local-only` data-egress filtering (never a silent downgrade), and per-job and daily token/cost budgets with all-or-nothing reservations.
+- Tool calling: native where supported, and a JSON fallback (`tool_mode: json`) that validates replies and self-corrects once.
+- Egress guard: model calls reach only configured endpoints, with no redirects. Offline mode rejects external providers and public AI hosts. Tests prove that no outside API is called.
+- OpenTelemetry GenAI span attributes on every model call.
+- CLI: `fixloop llm list` and `fixloop llm test [--model|--task] [--tool] [--local-only]`.
+- `fixloop-eval`: eval case format, loader, scoring (found / false alarms / missed, precision, recall, fix pass rate) and three seed cases in `eval/cases/`.
+- Example configs: `examples/fixloop-local.yaml` (offline) and `examples/fixloop-frontier.yaml`.
+
+#### Changed
+- Config: providers gain `preset` and `timeout_secs`; models gain `price` and `tool_mode`; new `llm.budgets` and `llm.retry` sections.
+- cargo-deny checks the license graph for the targets we ship.
+
 ### Fixed
 - Scorecard workflow referenced a non-existent `v2` tag of `ossf/scorecard-action`; it is now pinned to v2.5.0 by commit SHA.
 - DCO check now skips commits authored by Dependabot, which cannot sign off.

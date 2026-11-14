@@ -1,6 +1,6 @@
 # ADR-0004: LLM provider abstraction, routing, fallback and budgets
 
-* Status: Proposed
+* Status: Accepted (implemented in Phase 1)
 * Date: 2026-11-14
 
 ## Context
@@ -57,3 +57,12 @@ Hierarchical meters (per job, per PR, per repo/day, per team/day, org/day). They
 
 ## Consequences
 We maintain request mappers ourselves (about 6 frontier APIs). This is acceptable: they are small, fully covered by recorded fixtures, and remove SDK churn.
+
+## Implementation notes (Phase 1)
+* Implemented: Anthropic, OpenAI and OpenAI-compatible providers (Ollama, vLLM, llama.cpp, LM Studio and NIM presets). Gemini, Azure OpenAI, Bedrock and Vertex are rejected with a clear error for now. Gemini and Azure can already be reached through `openai_compatible`.
+* `stream` and `embed` are not in the trait yet. They will be added when a consumer needs them (dashboard live output, Phase 3 semantic dedupe).
+* Egress: each provider's HTTP client only accepts its own `host:port`, and redirects are disabled. In offline mode, config validation also rejects `openai_compatible` endpoints on known public AI hosts (`PUBLIC_AI_HOSTS`). An internal endpoint that proxies to a public API cannot be detected; that remains the operator's responsibility.
+* Spans use the current GenAI conventions (`gen_ai.provider.name`, `gen_ai.request.model`, `gen_ai.usage.*`) plus `fixloop.cost_usd`.
+* Budgets are in memory. Persistence and per-repo/per-team accounts come with the store in Phase 2.
+* No circuit breaker yet. Retries are per call with exponential backoff and no jitter.
+* The TLS stack is rustls with aws-lc-rs and platform certificate verification. cargo-deny checks the license graph for the shipped targets only, because `webpki-root-certs` (CDLA-Permissive-2.0, not on the CNCF allowlist) is only pulled in on wasm32.

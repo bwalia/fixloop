@@ -1,0 +1,25 @@
+# A frontier model for review and fixing, with a local model as fallback and
+# for cheap triage. Put your key in the environment, never in this file:
+#   export ANTHROPIC_API_KEY=...
+#   fixloop --config examples/fixloop-frontier.yaml llm test --model claude
+llm:
+  providers:
+    anthropic: { kind: anthropic, api_key_env: ANTHROPIC_API_KEY }
+    ollama:    { kind: openai_compatible, preset: ollama }
+  models:
+    claude:
+      provider: anthropic
+      model: "claude-sonnet-5-5"
+      # Set from your provider's current price list to enable cost budgets:
+      # price: { input_per_mtok: 0.0, output_per_mtok: 0.0 }
+    local:
+      provider: ollama
+      model: "qwen3:4b-instruct-2507-q4_K_M"
+  routes:
+    review:        [claude, local]
+    fix:           [claude]
+    second_review: [claude]
+    triage:        [local]
+  budgets:
+    per_job: { max_tokens: 2000000, max_cost_usd: 5.0 }
+    daily:   { max_cost_usd: 50.0 }

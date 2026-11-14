@@ -76,3 +76,51 @@ fn unimplemented_command_exits_2_with_phase() {
         .code(2)
         .stderr(predicate::str::contains("Phase 2"));
 }
+
+fn example(name: &str) -> std::path::PathBuf {
+    std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+        .join("../../examples")
+        .join(name)
+}
+
+#[test]
+fn llm_list_shows_offline_local_endpoint_only() {
+    fixloop()
+        .arg("--config")
+        .arg(example("fixloop-local.yaml"))
+        .args(["llm", "list"])
+        .assert()
+        .success()
+        .stdout(predicate::str::contains("offline: true"))
+        .stdout(predicate::str::contains(
+            "allowed endpoints: localhost:11434\n",
+        ));
+}
+
+#[test]
+fn llm_test_unknown_model_is_a_clear_error() {
+    fixloop()
+        .arg("--config")
+        .arg(example("fixloop-local.yaml"))
+        .args(["llm", "test", "--model", "nope"])
+        .assert()
+        .code(1)
+        .stderr(predicate::str::contains("model `nope`"))
+        .stderr(predicate::str::contains("hint:"));
+}
+
+#[test]
+fn example_configs_are_valid() {
+    for name in [
+        "fixloop.yaml",
+        "fixloop-local.yaml",
+        "fixloop-frontier.yaml",
+    ] {
+        fixloop()
+            .arg("--config")
+            .arg(example(name))
+            .args(["config", "validate"])
+            .assert()
+            .success();
+    }
+}

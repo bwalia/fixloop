@@ -43,6 +43,9 @@ enum Command {
     /// Inspect and validate configuration.
     #[command(subcommand)]
     Config(commands::config::ConfigCommand),
+    /// Inspect model routing and send test prompts.
+    #[command(subcommand)]
+    Llm(commands::llm::LlmCommand),
     /// Run the Fixloop server, worker and dashboard.
     Serve,
     /// Review local changes before you push.
@@ -135,7 +138,8 @@ fn run(cli: Cli) -> Result<(), CliError> {
 
     runtime.block_on(async {
         let _guard = telemetry::init(&config.telemetry)?;
-        match cli.command {
+        match &cli.command {
+            Command::Llm(cmd) => commands::llm::run(cmd, &config).await,
             Command::Serve => Err(CliError::not_yet("serve", 2)),
             Command::Review => Err(CliError::not_yet("review", 2)),
             Command::Fix { .. } => Err(CliError::not_yet("fix", 4)),
