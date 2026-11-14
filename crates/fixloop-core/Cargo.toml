@@ -1,0 +1,26 @@
+[package]
+name = "fixloop-core"
+description = "Domain model, shared traits, configuration schema and error types."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+authors.workspace = true
+publish = false
+
+[dependencies]
+figment.workspace = true
+serde.workspace = true
+serde_json.workspace = true
+serde-saphyr.workspace = true
+thiserror.workspace = true
+url.workspace = true
+
+[dev-dependencies]
+figment = { workspace = true, features = ["test"] }
+tempfile.workspace = true
+
+[lints]
+workspace = true
