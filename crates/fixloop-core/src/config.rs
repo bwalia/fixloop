@@ -152,18 +152,119 @@ impl ProviderKind {
     }
 }
 
+/// Ready-made defaults for popular OpenAI-compatible servers.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum Preset {
+    /// Ollama (`http://localhost:11434/v1`).
+    Ollama,
+    /// vLLM (`http://localhost:8000/v1`).
+    Vllm,
+    /// llama.cpp server (`http://localhost:8080/v1`).
+    LlamaCpp,
+    /// LM Studio (`http://localhost:1234/v1`).
+    LmStudio,
+    /// NVIDIA NIM (`http://localhost:8000/v1`).
+    Nim,
+}
+
+impl Preset {
+    /// The endpoint used when `base_url` is not set.
+    pub fn default_base_url(self) -> &'static str {
+        match self {
+            Self::Ollama => "http://localhost:11434/v1",
+            Self::Vllm | Self::Nim => "http://localhost:8000/v1",
+            Self::LlamaCpp => "http://localhost:8080/v1",
+            Self::LmStudio => "http://localhost:1234/v1",
+        }
+    }
+}
+
 /// A configured model provider.
 #[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
 #[serde(deny_unknown_fields)]
 pub struct ProviderConfig {
     /// API family.
     pub kind: ProviderKind,
-    /// Endpoint. Required for `openai_compatible`.
+    /// Endpoint. Required for `openai_compatible` unless `preset` is set.
     #[serde(default)]
     pub base_url: Option<Url>,
+    /// Defaults for a known OpenAI-compatible server.
+    #[serde(default)]
+    pub preset: Option<Preset>,
     /// Name of the environment variable holding the API key (never the key itself).
     #[serde(default)]
     pub api_key_env: Option<String>,
+    /// Request timeout in seconds. Local models can be slow, so the default is generous.
+    #[serde(default = "default_timeout_secs")]
+    pub timeout_secs: u64,
+}
+
+fn default_timeout_secs() -> u64 {
+    300
+}
+
+/// Hosts of public, third-party AI APIs. In offline mode an
+/// `openai_compatible` provider may not point at any of these.
+pub const PUBLIC_AI_HOSTS: &[&str] = &[
+    "api.anthropic.com",
+    "api.openai.com",
+    "generativelanguage.googleapis.com",
+    "aiplatform.googleapis.com",
+    "openai.azure.com",
+    "bedrock-runtime.amazonaws.com",
+    "api.mistral.ai",
+    "api.groq.com",
+    "api.together.xyz",
+    "api.together.ai",
+    "api.fireworks.ai",
+    "api.deepseek.com",
+    "openrouter.ai",
+    "api.cohere.com",
+    "api.x.ai",
+    "integrate.api.nvidia.com",
+];
+
+/// Whether `host` is, or is a subdomain of, a public AI API host.
+pub fn is_public_ai_host(host: &str) -> bool {
+    let host = host.trim_end_matches('.').to_ascii_lowercase();
+    PUBLIC_AI_HOSTS.iter().any(|h| {
+        host == *h
+            || host.ends_with(&format!(".{h}"))
+            || (h.starts_with("bedrock-runtime") && host.starts_with("bedrock-runtime."))
+    })
+}
+
+impl ProviderConfig {
+    /// The endpoint to call: `base_url`, else the preset's default.
+    pub fn effective_base_url(&self) -> Option<Url> {
+        self.base_url.clone().or_else(|| {
+            self.preset
+                .and_then(|p| Url::parse(p.default_base_url()).ok())
+        })
+    }
+}
+
+/// How a model is asked to call tools.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "snake_case")]
+pub enum ToolMode {
+    /// The provider's native tool-calling API.
+    #[default]
+    Native,
+    /// Tools described in the prompt; the model answers with a JSON envelope.
+    /// For models without native tool support.
+    Json,
+}
+
+/// Price of a model in US dollars per million tokens.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct Price {
+    /// Dollars per million input tokens.
+    pub input_per_mtok: f64,
+    /// Dollars per million output tokens.
+    pub output_per_mtok: f64,
 }
 
 /// A named model on a provider. Model identifiers only ever come from config.
@@ -174,6 +275,63 @@ pub struct ModelConfig {
     pub provider: String,
     /// Provider-specific model identifier.
     pub model: String,
+    /// Price, for cost reporting and cost budgets. Unset means free (e.g. local models).
+    #[serde(default)]
+    pub price: Option<Price>,
+    /// How tools are offered to this model.
+    #[serde(default)]
+    pub tool_mode: ToolMode,
+}
+
+/// Token and cost limits. Unset fields mean no limit.
+#[derive(Debug, Clone, Copy, Default, PartialEq, Serialize, Deserialize)]
+#[serde(default, deny_unknown_fields)]
+pub struct BudgetLimit {
+    /// Maximum input + output tokens.
+    pub max_tokens: Option<u64>,
+    /// Maximum cost in US dollars.
+    pub max_cost_usd: Option<f64>,
+}
+
+/// Global budgets. Per-repository and per-team budgets come from policies.
+#[derive(Debug, Clone, Copy, PartialEq, Serialize, Deserialize)]
+#[serde(default, deny_unknown_fields)]
+pub struct BudgetsConfig {
+    /// Limit for a single job (one review, one fix).
+    pub per_job: BudgetLimit,
+    /// Limit for all jobs in one UTC day.
+    pub daily: BudgetLimit,
+}
+
+impl Default for BudgetsConfig {
+    fn default() -> Self {
+        Self {
+            per_job: BudgetLimit {
+                max_tokens: Some(2_000_000),
+                max_cost_usd: Some(5.0),
+            },
+            daily: BudgetLimit::default(),
+        }
+    }
+}
+
+/// Retry policy for a single model before falling back to the next.
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Serialize, Deserialize)]
+#[serde(default, deny_unknown_fields)]
+pub struct RetryConfig {
+    /// Retries after the first attempt, for rate limits, server errors and timeouts.
+    pub max_retries: u32,
+    /// Delay before the first retry; doubles each time.
+    pub initial_backoff_ms: u64,
+}
+
+impl Default for RetryConfig {
+    fn default() -> Self {
+        Self {
+            max_retries: 2,
+            initial_backoff_ms: 500,
+        }
+    }
 }
 
 /// The kinds of work Fixloop routes to models.
@@ -210,6 +368,10 @@ pub struct LlmConfig {
     pub models: BTreeMap<String, ModelConfig>,
     /// Ordered fallback chain of model names, per task.
     pub routes: BTreeMap<Task, Vec<String>>,
+    /// Token and cost budgets.
+    pub budgets: BudgetsConfig,
+    /// Retry policy.
+    pub retry: RetryConfig,
 }
 
 /// Sandbox runner implementations.
@@ -274,11 +436,31 @@ impl FixloopConfig {
     pub fn validate(&self) -> Result<(), ConfigError> {
         let llm = &self.llm;
         for (name, p) in &llm.providers {
-            if p.kind == ProviderKind::OpenaiCompatible && p.base_url.is_none() {
+            if p.kind == ProviderKind::OpenaiCompatible && p.effective_base_url().is_none() {
                 return Err(ConfigError::invalid(
                     format!("llm.providers.{name}.base_url"),
                     "openai_compatible providers need an endpoint",
-                    "set base_url, e.g. http://localhost:11434/v1 for Ollama",
+                    "set base_url, or a preset: ollama, vllm, llama_cpp, lm_studio, nim",
+                ));
+            }
+            if p.preset.is_some() && p.kind != ProviderKind::OpenaiCompatible {
+                return Err(ConfigError::invalid(
+                    format!("llm.providers.{name}.preset"),
+                    "presets only apply to openai_compatible providers",
+                    "remove `preset` or set `kind: openai_compatible`",
+                ));
+            }
+            if llm.offline
+                && let Some(host) = p
+                    .effective_base_url()
+                    .as_ref()
+                    .and_then(|u| u.host_str().map(str::to_owned))
+                && is_public_ai_host(&host)
+            {
+                return Err(ConfigError::invalid(
+                    format!("llm.providers.{name}.base_url"),
+                    format!("`{host}` is a public AI API but llm.offline is true"),
+                    "point base_url at your own server, or set llm.offline: false",
                 ));
             }
             if llm.offline && p.kind.locality() == Locality::External {
@@ -290,6 +472,15 @@ impl FixloopConfig {
             }
         }
         for (name, m) in &llm.models {
+            if let Some(price) = m.price
+                && (price.input_per_mtok < 0.0 || price.output_per_mtok < 0.0)
+            {
+                return Err(ConfigError::invalid(
+                    format!("llm.models.{name}.price"),
+                    "prices cannot be negative",
+                    "use dollars per million tokens, e.g. input_per_mtok: 3.0",
+                ));
+            }
             if !llm.providers.contains_key(&m.provider) {
                 return Err(ConfigError::invalid(
                     format!("llm.models.{name}.provider"),
@@ -430,6 +621,37 @@ sandbox: { runner: kubernetes, fallback: docker }
     fn openai_compatible_requires_base_url() {
         let e = load_str("llm: { providers: { o: { kind: openai_compatible } } }").unwrap_err();
         assert!(e.to_string().contains("base_url"), "{e}");
+    }
+
+    #[test]
+    fn preset_supplies_base_url() {
+        let c = load_str("llm: { providers: { o: { kind: openai_compatible, preset: ollama } } }")
+            .unwrap();
+        assert_eq!(
+            c.llm.providers["o"].effective_base_url().unwrap().as_str(),
+            "http://localhost:11434/v1"
+        );
+    }
+
+    #[test]
+    fn offline_rejects_compatible_provider_pointing_at_public_api() {
+        let e = load_str(
+            "llm: { offline: true, providers: { o: { kind: openai_compatible, base_url: 'https://api.openai.com/v1' } } }",
+        )
+        .unwrap_err();
+        assert!(e.to_string().contains("public AI API"), "{e}");
+        assert!(is_public_ai_host("my-resource.openai.azure.com"));
+        assert!(is_public_ai_host("bedrock-runtime.us-east-1.amazonaws.com"));
+        assert!(!is_public_ai_host("vllm.internal.svc"));
+    }
+
+    #[test]
+    fn negative_price_rejected() {
+        let e = load_str(
+            "llm: { providers: { p: { kind: openai, api_key_env: K } }, models: { m: { provider: p, model: x, price: { input_per_mtok: -1, output_per_mtok: 1 } } } }",
+        )
+        .unwrap_err();
+        assert!(e.to_string().contains("price"), "{e}");
     }
 
     #[test]

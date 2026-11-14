@@ -6,6 +6,20 @@
 
 [graph]
 all-features = false
+# Check the platforms we ship binaries for. Some crates pull extra
+# dependencies only on other targets (e.g. rustls-platform-verifier needs
+# webpki-root-certs, CDLA-Permissive-2.0, only on wasm32). When the wasm
+# dashboard lands (Phase 6), add wasm32-unknown-unknown here and keep
+# reqwest/TLS out of its dependency tree.
+targets = [
+  "x86_64-unknown-linux-gnu",
+  "aarch64-unknown-linux-gnu",
+  "x86_64-unknown-linux-musl",
+  "aarch64-unknown-linux-musl",
+  "x86_64-apple-darwin",
+  "aarch64-apple-darwin",
+  "x86_64-pc-windows-msvc",
+]
 
 [advisories]
 version = 2
