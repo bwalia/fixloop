@@ -1,0 +1,16 @@
+[package]
+name = "fixloop-store"
+description = "Database access (PostgreSQL and SQLite) and the durable job queue."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+authors.workspace = true
+publish = false
+
+[dependencies]
+
+[lints]
+workspace = true

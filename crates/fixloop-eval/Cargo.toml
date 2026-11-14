@@ -1,0 +1,16 @@
+[package]
+name = "fixloop-eval"
+description = "Evaluation harness for scoring models on seeded-bug repositories."
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+license.workspace = true
+repository.workspace = true
+homepage.workspace = true
+authors.workspace = true
+publish = false
+
+[dependencies]
+
+[lints]
+workspace = true

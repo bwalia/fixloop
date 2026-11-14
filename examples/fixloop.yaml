@@ -1,0 +1,15 @@
+# Example server config. Validate with: fixloop --config examples/fixloop.yaml config validate
+server:
+  bind: "127.0.0.1:8080"
+telemetry:
+  log_format: pretty
+llm:
+  providers:
+    local: { kind: openai_compatible, base_url: "http://localhost:11434/v1" }
+  models:
+    default: { provider: local, model: "replace-with-your-model" }
+  routes:
+    review: [default]
+    triage: [default]
+sandbox:
+  runner: docker
