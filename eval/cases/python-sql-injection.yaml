@@ -1,0 +1,21 @@
+language: python
+description: Adds a lookup of users by name.
+diff: |
+  --- a/app/users.py
+  +++ b/app/users.py
+  @@ -1,4 +1,9 @@
+   import sqlite3
+
+   def connect(path):
+       return sqlite3.connect(path)
+  +
+  +def find_user(conn, name):
+  +    cur = conn.cursor()
+  +    cur.execute(f"SELECT id, email FROM users WHERE name = '{name}'")
+  +    return cur.fetchone()
+expected:
+  - path: app/users.py
+    line_start: 8
+    line_end: 8
+    category: security
+    description: SQL injection through string formatting; use a parameterised query.

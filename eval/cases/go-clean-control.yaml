@@ -1,0 +1,19 @@
+language: go
+description: Adds a correct clamp helper. Clean control case; any finding is a false alarm.
+diff: |
+  --- a/mathx/clamp.go
+  +++ b/mathx/clamp.go
+  @@ -0,0 +1,12 @@
+  +package mathx
+  +
+  +// Clamp limits v to the range [lo, hi]. It assumes lo <= hi.
+  +func Clamp(v, lo, hi int) int {
+  +	if v < lo {
+  +		return lo
+  +	}
+  +	if v > hi {
+  +		return hi
+  +	}
+  +	return v
+  +}
+expected: []
