@@ -1,4 +1,4 @@
-//! Source code host adapters: GitHub, GitLab, Bitbucket, Gitea/Forgejo, and CI log readers.
-//!
-//! This crate is a placeholder. Its implementation is planned for Phase 2
-//! (see `docs/PLAN.md`).
+//! Source code host adapters. GitHub first; others plug in behind
+//! [`fixloop_core::scm::ScmProvider`].
+
+pub mod github;
