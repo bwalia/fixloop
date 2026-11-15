@@ -1,0 +1,30 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: fixloop-config
+data:
+  fixloop.yaml: |
+    # Secrets are not here: the API key and webhook secret come from the
+    # `fixloop` Secret as environment variables, the App key as a file.
+    server:
+      bind: "0.0.0.0:8080"
+      workers: 2
+    database:
+      # SQLite on the volume, single replica. For Postgres, set
+      # FIXLOOP_DATABASE__URL in the Secret instead (it overrides this).
+      url: "sqlite:///var/lib/fixloop/fixloop.db?mode=rwc"
+    telemetry:
+      log_format: json
+      log_level: info
+    github:
+      app_id: 0 # REPLACE with your App id (fixloop github create-app prints it)
+      private_key_path: /var/run/secrets/fixloop/github/private-key.pem
+    llm:
+      providers:
+        anthropic: { kind: anthropic, api_key_env: ANTHROPIC_API_KEY }
+      models:
+        claude: { provider: anthropic, model: "claude-sonnet-5-5" }
+      routes:
+        review: [claude]
+      budgets:
+        per_job: { max_tokens: 2000000 }

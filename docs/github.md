@@ -50,6 +50,8 @@ GitHub must be able to reach `POST /webhooks/github`. In the App's settings, set
 
 Every delivery is checked against the webhook secret. A request with a bad signature is refused, and redelivered events are not reviewed twice.
 
+To run it on Kubernetes, use the image `ghcr.io/bwalia/fixloop` and the manifests in [deploy/kubernetes](../deploy/kubernetes/README.md).
+
 ## Commands in pull requests
 
 | Comment | Effect |
