@@ -1,0 +1,348 @@
+/*
+ * Fixloop theme. Starting point: the TenthMatrix "Lattice" tokens
+ * (../tenthmatrix/design/tm-theme.css), with the tm prefix renamed to fx.
+ * Fonts: Bricolage Grotesque (display), Instrument Sans (body), IBM Plex Mono (code).
+ */
+/* ------------------------------------------------------------ constants */
+:root {
+  /* brand constants (identical in both themes) */
+  --fx-brand-ink: #12161a;
+  --fx-brand-paper: #f7f6f2;
+  --fx-brand-viridian: #0a7a57;
+  --fx-brand-mint: #3dd69e;
+  --fx-brand-graphite: #0e1113;
+  --fx-brand-amber: #f2b252;
+
+  /* night panel: surfaces that stay dark in BOTH themes (footer, terminal
+     bands, OG art). Text pairs: text 15.2:1, muted 8.9:1, subtle 6.0:1,
+     accent 10.0:1 on --fx-night-bg; all >= 4.5:1 on --fx-night-raised. */
+  --fx-night-bg: #12161a;
+  --fx-night-raised: #1b2024;
+  --fx-night-line: #2a3035;
+  --fx-night-text: #f1f2ee;
+  --fx-night-muted: #b0b7b4;
+  --fx-night-subtle: #8f9895;
+  --fx-night-accent: #3dd69e;
+  --fx-night-accent-hover: #6be3b6;
+
+  /* type families: next/font sets --font-fx-*; fallbacks keep metrics close */
+  --fx-font-display: var(--font-fx-display, "Bricolage Grotesque"), var(--font-fx-body, "Instrument Sans"),
+    ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --fx-font-body: var(--font-fx-body, "Instrument Sans"), ui-sans-serif, system-ui, -apple-system, "Segoe UI",
+    Roboto, "Helvetica Neue", Arial, sans-serif;
+  --fx-font-mono: var(--font-fx-mono, "IBM Plex Mono"), ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  /* weights */
+  --fx-weight-regular: 400;
+  --fx-weight-medium: 500;
+  --fx-weight-semibold: 600;
+  --fx-weight-bold: 700;
+  --fx-weight-display: 650;
+
+  /* fluid type scale (min at 390px, max at 1440px) */
+  --fx-text-2xs: 0.75rem; /* 12px: legal, badges (mono only) */
+  --fx-text-xs: 0.8125rem; /* 13px: captions, eyebrows */
+  --fx-text-sm: 0.9375rem; /* 15px: UI, meta */
+  --fx-text-base: clamp(1rem, 0.976rem + 0.1vw, 1.0625rem); /* 16 -> 17 body */
+  --fx-text-md: clamp(1.125rem, 1.078rem + 0.19vw, 1.25rem); /* 18 -> 20 lead */
+  --fx-text-lg: clamp(1.25rem, 1.157rem + 0.38vw, 1.5rem); /* 20 -> 24 h4 */
+  --fx-text-xl: clamp(1.5rem, 1.36rem + 0.57vw, 1.875rem); /* 24 -> 30 h3 */
+  --fx-text-2xl: clamp(1.75rem, 1.494rem + 1.05vw, 2.4375rem); /* 28 -> 39 h2 */
+  --fx-text-3xl: clamp(2.125rem, 1.707rem + 1.71vw, 3.25rem); /* 34 -> 52 h1 */
+  --fx-text-4xl: clamp(2.5rem, 1.849rem + 2.67vw, 4.25rem); /* 40 -> 68 display */
+  --fx-text-5xl: clamp(2.875rem, 1.946rem + 3.81vw, 5.375rem); /* 46 -> 86 hero */
+
+  --fx-leading-tight: 1.08; /* display */
+  --fx-leading-snug: 1.22; /* headings */
+  --fx-leading-normal: 1.6; /* body */
+  --fx-leading-relaxed: 1.72; /* long-form article */
+  --fx-tracking-display: -0.025em;
+  --fx-tracking-heading: -0.015em;
+  --fx-tracking-eyebrow: 0.08em;
+  --fx-measure: 68ch; /* article line length */
+
+  /* spacing (4px base) */
+  --fx-space-0: 0;
+  --fx-space-1: 0.25rem; /* 4 */
+  --fx-space-2: 0.5rem; /* 8 */
+  --fx-space-3: 0.75rem; /* 12 */
+  --fx-space-4: 1rem; /* 16 */
+  --fx-space-5: 1.25rem; /* 20 */
+  --fx-space-6: 1.5rem; /* 24 */
+  --fx-space-8: 2rem; /* 32 */
+  --fx-space-10: 2.5rem; /* 40 */
+  --fx-space-12: 3rem; /* 48 */
+  --fx-space-16: 4rem; /* 64 */
+  --fx-space-20: 5rem; /* 80 */
+  --fx-space-24: 6rem; /* 96 */
+  --fx-space-section: clamp(3.5rem, 2.36rem + 4.67vw, 7rem); /* 56 -> 112 between page sections */
+
+  /* radii: small and square-ish, echoing the lattice cells (rx 1 of 6) */
+  --fx-radius-xs: 3px;
+  --fx-radius-sm: 6px;
+  --fx-radius: 10px;
+  --fx-radius-lg: 16px;
+  --fx-radius-pill: 999px;
+
+  /* z-index */
+  --fx-z-base: 0;
+  --fx-z-raised: 10;
+  --fx-z-sticky: 100;
+  --fx-z-header: 200;
+  --fx-z-dropdown: 300;
+  --fx-z-overlay: 400;
+  --fx-z-modal: 500;
+  --fx-z-toast: 600;
+  --fx-z-cookie: 700;
+
+  /* motion */
+  --fx-duration-instant: 80ms;
+  --fx-duration-fast: 140ms;
+  --fx-duration: 220ms;
+  --fx-duration-slow: 360ms;
+  --fx-duration-slower: 560ms;
+  --fx-ease-standard: cubic-bezier(0.2, 0, 0, 1);
+  --fx-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --fx-ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --fx-ease-step: steps(4, end); /* lattice "tick" for loaders */
+
+  /* layout */
+  --fx-container: 1240px;
+  --fx-container-wide: 1440px;
+  --fx-container-narrow: 760px; /* articles, forms */
+  --fx-gutter: clamp(16px, 2.2vw + 7px, 40px); /* 16px at 390px mobile */
+  --fx-gutter-mobile: 16px;
+  --fx-grid-gap: clamp(16px, 1.5vw + 10px, 32px);
+  --fx-header-h: 64px;
+  --fx-header-h-mobile: 56px;
+  --fx-tap-target: 44px;
+  --fx-focus-width: 2px;
+  --fx-focus-offset: 2px;
+}
+
+/* ---------------------------------------------------------- light theme */
+:root,
+[data-theme="light"] {
+  color-scheme: light;
+
+  /* surfaces */
+  --fx-bg: #f7f6f2; /* warm paper */
+  --fx-surface: #ffffff; /* cards, panels */
+  --fx-raised: #ffffff; /* menus, popovers (with shadow) */
+  --fx-sunken: #efede7; /* wells, inline code, table stripes */
+  --fx-inverse: #12161a; /* deliberate dark bands on light pages */
+  --fx-line: #e0ddd4; /* hairlines, dividers */
+  --fx-line-strong: #7d828a; /* input borders, 3:1 on all surfaces */
+
+  /* text */
+  --fx-text: #12161a; /* 16.8:1 on bg */
+  --fx-text-muted: #474d55; /* 7.5:1 on bg */
+  --fx-text-subtle: #5f656d; /* 5.4:1 on bg, 5.0:1 on sunken */
+  --fx-text-inverse: #f1f2ee;
+
+  /* accent (viridian) */
+  --fx-accent: #0a7a57; /* links, primary buttons: 4.9:1 on bg, 5.3:1 on white */
+  --fx-accent-hover: #086448;
+  --fx-accent-contrast: #ffffff; /* text on accent: 5.3:1 */
+  --fx-accent-soft: #e2f1ea; /* tinted wash behind accent text: 4.6:1 */
+  --fx-accent-line: #9fd2bd; /* decorative accent borders (non-text) */
+
+  /* secondary accent (amber): highlights, "new", data callouts */
+  --fx-secondary: #9a5300;
+  --fx-secondary-soft: #f8ecdb;
+
+  /* status */
+  --fx-success: #1f7a3b;
+  --fx-success-soft: #e3f2e6;
+  --fx-warn: #8a5a00;
+  --fx-warn-soft: #fbf0d6;
+  --fx-danger: #b42318;
+  --fx-danger-soft: #fbe8e5;
+  --fx-info: #245bb8;
+  --fx-info-soft: #e5edfa;
+
+  /* code: dark blocks in both themes, inline code stays light */
+  --fx-code-bg: #15191c;
+  --fx-code-text: #e6e8e3;
+  --fx-code-comment: #9aa39f;
+  --fx-code-keyword: #5fddae;
+  --fx-code-string: #f2c27a;
+  --fx-code-number: #9cc0ff;
+  --fx-code-line: #2a3035;
+  --fx-code-inline-bg: #efede7;
+  --fx-code-inline-text: #12161a;
+
+  /* interaction */
+  --fx-focus-ring-color: #0a7a57;
+  --fx-focus-ring: 0 0 0 var(--fx-focus-offset) var(--fx-bg), 0 0 0 calc(var(--fx-focus-offset) + var(--fx-focus-width)) #0a7a57;
+  --fx-selection-bg: #c4e6d7;
+  --fx-selection-text: #12161a;
+  --fx-overlay: rgb(18 22 26 / 0.48);
+
+  /* logo */
+  --fx-logo-ink: #12161a;
+  --fx-logo-accent: #0a7a57;
+
+  /* gradients (used sparingly: hero wash, OG, CTA band) */
+  --fx-gradient-wash: radial-gradient(120% 80% at 85% 0%, rgb(10 122 87 / 0.1) 0%, rgb(10 122 87 / 0) 60%);
+  --fx-gradient-accent: linear-gradient(135deg, #0a7a57 0%, #086448 100%);
+  --fx-gradient-inverse: linear-gradient(160deg, #12161a 0%, #1b2024 100%);
+  --fx-gradient-fade: linear-gradient(180deg, rgb(247 246 242 / 0) 0%, #f7f6f2 100%);
+
+  /* shadows: warm, low, short */
+  --fx-shadow-xs: 0 1px 0 rgb(18 22 26 / 0.04);
+  --fx-shadow-sm: 0 1px 2px rgb(18 22 26 / 0.06), 0 1px 1px rgb(18 22 26 / 0.04);
+  --fx-shadow: 0 4px 12px -2px rgb(18 22 26 / 0.08), 0 2px 4px rgb(18 22 26 / 0.04);
+  --fx-shadow-lg: 0 16px 40px -8px rgb(18 22 26 / 0.14), 0 4px 10px rgb(18 22 26 / 0.05);
+}
+
+/* ----------------------------------------------------------- dark theme */
+/* Designed, not inverted: graphite with a faint green cast, mint accent,
+   elevation by lightness rather than shadow, softer pure-white avoidance. */
+:root[data-theme="dark"],
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  --fx-bg: #0e1113;
+  --fx-surface: #14181b;
+  --fx-raised: #1b2024;
+  --fx-sunken: #090b0d;
+  --fx-inverse: #f1f2ee;
+  --fx-line: #262c31;
+  --fx-line-strong: #68717a;
+
+  --fx-text: #e8eae6; /* 15.7:1 on bg */
+  --fx-text-muted: #b0b7b4; /* 9.2:1 on bg */
+  --fx-text-subtle: #8f9895; /* 6.4:1 on bg, 5.6:1 on raised */
+  --fx-text-inverse: #12161a;
+
+  --fx-accent: #3dd69e;
+  --fx-accent-hover: #6be3b6;
+  --fx-accent-contrast: #05261a;
+  --fx-accent-soft: #10281f;
+  --fx-accent-line: #1f5a43;
+
+  --fx-secondary: #f2b252;
+  --fx-secondary-soft: #2b2213;
+
+  --fx-success: #62d17e;
+  --fx-success-soft: #11261a;
+  --fx-warn: #f5c451;
+  --fx-warn-soft: #2b2410;
+  --fx-danger: #ff8e80;
+  --fx-danger-soft: #2e1715;
+  --fx-info: #8db4ff;
+  --fx-info-soft: #141e33;
+
+  --fx-code-bg: #090b0d;
+  --fx-code-text: #e6e8e3;
+  --fx-code-comment: #8f9895;
+  --fx-code-keyword: #3dd69e;
+  --fx-code-string: #f2c27a;
+  --fx-code-number: #9cc0ff;
+  --fx-code-line: #1f2428;
+  --fx-code-inline-bg: #1b2024;
+  --fx-code-inline-text: #e8eae6;
+
+  --fx-focus-ring-color: #3dd69e;
+  --fx-focus-ring: 0 0 0 var(--fx-focus-offset) var(--fx-bg), 0 0 0 calc(var(--fx-focus-offset) + var(--fx-focus-width)) #3dd69e;
+  --fx-selection-bg: #1f5a43;
+  --fx-selection-text: #f1f2ee;
+  --fx-overlay: rgb(5 7 8 / 0.64);
+
+  --fx-logo-ink: #f1f2ee;
+  --fx-logo-accent: #3dd69e;
+
+  --fx-gradient-wash: radial-gradient(120% 80% at 85% 0%, rgb(61 214 158 / 0.12) 0%, rgb(61 214 158 / 0) 60%);
+  --fx-gradient-accent: linear-gradient(135deg, #3dd69e 0%, #2bbd88 100%);
+  --fx-gradient-inverse: linear-gradient(160deg, #1b2024 0%, #232a2f 100%);
+  --fx-gradient-fade: linear-gradient(180deg, rgb(14 17 19 / 0) 0%, #0e1113 100%);
+
+  --fx-shadow-xs: 0 1px 0 rgb(0 0 0 / 0.3);
+  --fx-shadow-sm: 0 1px 2px rgb(0 0 0 / 0.4);
+  --fx-shadow: 0 4px 14px -2px rgb(0 0 0 / 0.5), inset 0 1px 0 rgb(255 255 255 / 0.03);
+  --fx-shadow-lg: 0 18px 44px -8px rgb(0 0 0 / 0.6), inset 0 1px 0 rgb(255 255 255 / 0.04);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+
+    --fx-bg: #0e1113;
+    --fx-surface: #14181b;
+    --fx-raised: #1b2024;
+    --fx-sunken: #090b0d;
+    --fx-inverse: #f1f2ee;
+    --fx-line: #262c31;
+    --fx-line-strong: #68717a;
+
+    --fx-text: #e8eae6;
+    --fx-text-muted: #b0b7b4;
+    --fx-text-subtle: #8f9895;
+    --fx-text-inverse: #12161a;
+
+    --fx-accent: #3dd69e;
+    --fx-accent-hover: #6be3b6;
+    --fx-accent-contrast: #05261a;
+    --fx-accent-soft: #10281f;
+    --fx-accent-line: #1f5a43;
+
+    --fx-secondary: #f2b252;
+    --fx-secondary-soft: #2b2213;
+
+    --fx-success: #62d17e;
+    --fx-success-soft: #11261a;
+    --fx-warn: #f5c451;
+    --fx-warn-soft: #2b2410;
+    --fx-danger: #ff8e80;
+    --fx-danger-soft: #2e1715;
+    --fx-info: #8db4ff;
+    --fx-info-soft: #141e33;
+
+    --fx-code-bg: #090b0d;
+    --fx-code-text: #e6e8e3;
+    --fx-code-comment: #8f9895;
+    --fx-code-keyword: #3dd69e;
+    --fx-code-string: #f2c27a;
+    --fx-code-number: #9cc0ff;
+    --fx-code-line: #1f2428;
+    --fx-code-inline-bg: #1b2024;
+    --fx-code-inline-text: #e8eae6;
+
+    --fx-focus-ring-color: #3dd69e;
+    --fx-focus-ring: 0 0 0 var(--fx-focus-offset) var(--fx-bg), 0 0 0 calc(var(--fx-focus-offset) + var(--fx-focus-width)) #3dd69e;
+    --fx-selection-bg: #1f5a43;
+    --fx-selection-text: #f1f2ee;
+    --fx-overlay: rgb(5 7 8 / 0.64);
+
+    --fx-logo-ink: #f1f2ee;
+    --fx-logo-accent: #3dd69e;
+
+    --fx-gradient-wash: radial-gradient(120% 80% at 85% 0%, rgb(61 214 158 / 0.12) 0%, rgb(61 214 158 / 0) 60%);
+    --fx-gradient-accent: linear-gradient(135deg, #3dd69e 0%, #2bbd88 100%);
+    --fx-gradient-inverse: linear-gradient(160deg, #1b2024 0%, #232a2f 100%);
+    --fx-gradient-fade: linear-gradient(180deg, rgb(14 17 19 / 0) 0%, #0e1113 100%);
+
+    --fx-shadow-xs: 0 1px 0 rgb(0 0 0 / 0.3);
+    --fx-shadow-sm: 0 1px 2px rgb(0 0 0 / 0.4);
+    --fx-shadow: 0 4px 14px -2px rgb(0 0 0 / 0.5), inset 0 1px 0 rgb(255 255 255 / 0.03);
+    --fx-shadow-lg: 0 18px 44px -8px rgb(0 0 0 / 0.6), inset 0 1px 0 rgb(255 255 255 / 0.04);
+  }
+}
+
+/* -------------------------------------------------------- reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  :root {
+    --fx-duration-instant: 0ms;
+    --fx-duration-fast: 0ms;
+    --fx-duration: 0ms;
+    --fx-duration-slow: 0ms;
+    --fx-duration-slower: 0ms;
+  }
+}
+
+/* ------------------------------------------------------- base hooks */
+::selection {
+  background: var(--fx-selection-bg);
+  color: var(--fx-selection-text);
+}
