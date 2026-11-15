@@ -1,5 +1,7 @@
 # Fixloop
 
+Website: [fixloop.run](https://fixloop.run)
+
 **Fixloop is an open source AI agent that closes the bug loop on your codebase:**
 
 **Review → Find → File → Fix → Check → Close**
@@ -17,8 +19,10 @@ Fixloop works with frontier models (Anthropic, OpenAI, Gemini, Azure, Bedrock, V
 
 ## Try it
 
+**New here? Follow [Getting started](docs/getting-started.md)**: install, pick any model (Claude, OpenAI, Gemini, or local with Ollama), and have Fixloop reviewing your pull requests.
+
 ```sh
-cargo install --git https://github.com/bwalia/fixloop fixloop-cli
+cargo install --locked --git https://github.com/bwalia/fixloop fixloop-cli
 cd your-repo
 fixloop init                      # adds .fixloop.yaml and .fixloop/rules/
 fixloop config validate-repo      # checks it
@@ -36,6 +40,8 @@ cargo run --bin fixloop -- --help
 
 ## Documentation
 
+- [Getting started](docs/getting-started.md)
+- [GitHub setup](docs/github.md)
 - [Architecture and plan](docs/PLAN.md)
 - [Architecture decision records](docs/adr/)
 - [Configuration reference](docs/config-reference.md)
