@@ -10,6 +10,21 @@ authors.workspace = true
 publish = false
 
 [dependencies]
+axum.workspace = true
+fixloop-agents.workspace = true
+fixloop-core.workspace = true
+fixloop-llm.workspace = true
+fixloop-scm.workspace = true
+fixloop-store.workspace = true
+serde_json.workspace = true
+thiserror.workspace = true
+tokio.workspace = true
+tracing.workspace = true
+
+[dev-dependencies]
+http-body-util = "0.1"
+tempfile.workspace = true
+tower.workspace = true
 
 [lints]
 workspace = true

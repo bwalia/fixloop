@@ -43,13 +43,16 @@ enum Command {
     /// Inspect and validate configuration.
     #[command(subcommand)]
     Config(commands::config::ConfigCommand),
+    /// Set up the GitHub App.
+    #[command(subcommand)]
+    Github(commands::github::GithubCommand),
     /// Inspect model routing and send test prompts.
     #[command(subcommand)]
     Llm(commands::llm::LlmCommand),
     /// Run the Fixloop server, worker and dashboard.
     Serve,
-    /// Review local changes before you push.
-    Review,
+    /// Review local changes before you push, or a GitHub pull request.
+    Review(commands::review::ReviewArgs),
     /// Run the Bug Fixer on an issue URL.
     Fix {
         /// Issue URL, e.g. https://github.com/org/repo/issues/42
@@ -120,6 +123,7 @@ fn run(cli: Cli) -> Result<(), CliError> {
     match &cli.command {
         Command::Init(args) => return commands::init::run(args),
         Command::Config(cmd) => return commands::config::run(cmd, cli.global.config.as_deref()),
+        Command::Github(cmd) => return commands::github::run(cmd),
         _ => {}
     }
 
@@ -140,10 +144,10 @@ fn run(cli: Cli) -> Result<(), CliError> {
         let _guard = telemetry::init(&config.telemetry)?;
         match &cli.command {
             Command::Llm(cmd) => commands::llm::run(cmd, &config).await,
-            Command::Serve => Err(CliError::not_yet("serve", 2)),
-            Command::Review => Err(CliError::not_yet("review", 2)),
+            Command::Serve => commands::serve::run(&config).await,
+            Command::Review(args) => commands::review::run(args, &config).await,
             Command::Fix { .. } => Err(CliError::not_yet("fix", 4)),
-            Command::Init(_) | Command::Config(_) => Ok(()),
+            Command::Init(_) | Command::Config(_) | Command::Github(_) => Ok(()),
         }
     })
 }

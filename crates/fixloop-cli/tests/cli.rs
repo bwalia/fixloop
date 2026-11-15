@@ -71,10 +71,10 @@ fn invalid_server_config_shows_hint() {
 #[test]
 fn unimplemented_command_exits_2_with_phase() {
     fixloop()
-        .arg("serve")
+        .args(["fix", "https://github.com/o/r/issues/1"])
         .assert()
         .code(2)
-        .stderr(predicate::str::contains("Phase 2"));
+        .stderr(predicate::str::contains("Phase 4"));
 }
 
 fn example(name: &str) -> std::path::PathBuf {

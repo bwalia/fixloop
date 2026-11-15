@@ -6,7 +6,7 @@ default-members = ["crates/*"]
 [workspace.package]
 version = "0.1.0"
 edition = "2024"
-rust-version = "1.89"
+rust-version = "1.94"
 license = "Apache-2.0"
 repository = "https://github.com/bwalia/fixloop"
 authors = ["The Fixloop Authors"]
@@ -15,9 +15,24 @@ authors = ["The Fixloop Authors"]
 # internal
 fixloop-core = { path = "crates/fixloop-core" }
 fixloop-llm = { path = "crates/fixloop-llm" }
+fixloop-scm = { path = "crates/fixloop-scm" }
+fixloop-store = { path = "crates/fixloop-store" }
+fixloop-agents = { path = "crates/fixloop-agents" }
+fixloop-server = { path = "crates/fixloop-server" }
 
 # external
 async-trait = "0.1"
+axum = "0.8"
+getrandom = "0.4"
+globset = "0.4"
+hex = "0.4"
+hmac = "0.13"
+jsonwebtoken = { version = "12", default-features = false, features = ["use_pem", "aws_lc_rs"] }
+open = "5"
+regex = "1"
+sha2 = "0.11"
+sqlx = { version = "0.9", default-features = false, features = ["any", "postgres", "sqlite", "migrate", "runtime-tokio", "tls-rustls-ring-native-roots"] }
+subtle = "2"
 clap = { version = "4.6", features = ["derive", "env", "wrap_help"] }
 figment = { version = "0.10", features = ["env"] }
 opentelemetry = "0.33"
@@ -29,7 +44,8 @@ serde_json = "1"
 serde-saphyr = "2"
 tempfile = "3"
 thiserror = "2"
-tokio = { version = "1.54", features = ["macros", "rt-multi-thread", "signal"] }
+tokio = { version = "1.54", features = ["macros", "rt-multi-thread", "signal", "net", "sync", "time"] }
+tower = "0.5"
 tracing = "0.1"
 tracing-opentelemetry = "0.34"
 tracing-subscriber = { version = "0.3", features = ["env-filter", "json", "fmt"] }

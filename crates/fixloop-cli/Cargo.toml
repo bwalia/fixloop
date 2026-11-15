@@ -14,18 +14,29 @@ name = "fixloop"
 path = "src/main.rs"
 
 [dependencies]
+axum.workspace = true
 clap.workspace = true
 fixloop-core.workspace = true
 fixloop-llm.workspace = true
+fixloop-scm.workspace = true
+fixloop-agents.workspace = true
+fixloop-server.workspace = true
+fixloop-store.workspace = true
+async-trait.workspace = true
+getrandom.workspace = true
+hex.workspace = true
+open.workspace = true
 serde_json.workspace = true
 opentelemetry.workspace = true
 opentelemetry_sdk.workspace = true
 opentelemetry-otlp.workspace = true
+serde.workspace = true
 serde-saphyr.workspace = true
 tokio.workspace = true
 tracing.workspace = true
 tracing-opentelemetry.workspace = true
 tracing-subscriber.workspace = true
+url.workspace = true
 
 [dev-dependencies]
 assert_cmd = "2"
