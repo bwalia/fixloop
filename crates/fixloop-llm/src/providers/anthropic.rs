@@ -60,9 +60,10 @@ pub fn request_body(model: &str, req: &CompletionRequest) -> Value {
     if let Some(system) = &req.system {
         body["system"] = json!(system);
     }
-    if let Some(t) = req.temperature {
-        body["temperature"] = json!(t);
-    }
+    // `req.temperature` is deliberately not sent. Current Claude models
+    // (Opus 4.7 and later, Sonnet 5 and later, Haiku 5.5, Fable) reject
+    // sampling parameters with HTTP 400, and newer API versions reject them
+    // on every model.
     if !req.tools.is_empty() {
         body["tools"] = req
             .tools
@@ -177,5 +178,21 @@ impl LlmProvider for Anthropic {
         ];
         let resp = self.http.post_json(&self.url, &headers, &body).await?;
         parse_response(&resp).map_err(|m| self.decode_error(m))
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn sampling_parameters_are_never_sent() {
+        let req = CompletionRequest {
+            temperature: Some(0.0),
+            ..CompletionRequest::default()
+        };
+        let body = request_body("claude-sonnet-5-5", &req);
+        assert!(body.get("temperature").is_none());
+        assert!(body.get("top_p").is_none());
     }
 }
