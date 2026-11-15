@@ -19,11 +19,26 @@ const MAX_BODY: usize = 25 * 1024 * 1024;
 /// Build the router.
 pub fn routes(state: AppState) -> Router {
     Router::new()
+        .route("/", get(index))
         .route("/healthz", get(|| async { "ok" }))
         .route("/readyz", get(readyz))
         .route("/webhooks/github", post(github_webhook))
         .layer(axum::extract::DefaultBodyLimit::max(MAX_BODY))
         .with_state(state)
+}
+
+/// A plain status page, so the root URL shows the server is up. Says nothing
+/// about configuration.
+async fn index() -> &'static str {
+    concat!(
+        "Fixloop ",
+        env!("CARGO_PKG_VERSION"),
+        "\n\n",
+        "POST /webhooks/github  GitHub App webhook\n",
+        "GET  /healthz          liveness\n",
+        "GET  /readyz           readiness (database)\n\n",
+        "https://github.com/bwalia/fixloop\n",
+    )
 }
 
 async fn readyz(State(s): State<AppState>) -> Response {
