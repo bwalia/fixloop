@@ -7,6 +7,7 @@ All notable changes to this project are documented here. The format follows [Kee
 ### Deployment
 
 #### Added
+- `GET /` returns a short plain-text status page (version and endpoints), so the server's root URL shows it is up.
 - Container image `ghcr.io/bwalia/fixloop` (distroless, non-root, amd64 and arm64), built by `.github/workflows/image.yml`: `edge` from `main`, semver tags from `v*` tags, with build provenance.
 - Kubernetes manifests in `deploy/kubernetes/` (kustomize): restricted Pod Security, read-only root filesystem, probes, SQLite volume or Postgres via Secret, example Ingress.
 

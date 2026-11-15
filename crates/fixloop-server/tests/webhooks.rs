@@ -118,7 +118,7 @@ async fn irrelevant_events_are_acknowledged_but_ignored() {
 #[tokio::test]
 async fn health_and_readiness() {
     let (s, _d) = state().await;
-    for path in ["/healthz", "/readyz"] {
+    for path in ["/", "/healthz", "/readyz"] {
         let app = fixloop_server::http::routes(s.clone());
         let res = app
             .oneshot(Request::get(path).body(Body::empty()).unwrap())
