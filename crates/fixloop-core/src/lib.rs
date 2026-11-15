@@ -7,6 +7,8 @@ pub mod config;
 pub mod domain;
 pub mod error;
 pub mod repo_config;
+pub mod scm;
+pub mod secrets;
 
 pub use config::FixloopConfig;
 pub use error::{ConfigError, Hinted};

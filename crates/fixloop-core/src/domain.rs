@@ -110,3 +110,56 @@ mod tests {
         assert_eq!(RepoMode::default(), RepoMode::Suggest);
     }
 }
+
+/// A problem found in code.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+pub struct Finding {
+    /// One-line title.
+    pub title: String,
+    /// Severity.
+    pub severity: Severity,
+    /// Kind of problem.
+    pub category: Category,
+    /// File path.
+    pub path: String,
+    /// Line (new-file numbering). For multi-line findings, the first line.
+    pub line: u32,
+    /// Last line, for multi-line findings.
+    pub end_line: Option<u32>,
+    /// Why it matters.
+    pub rationale: String,
+    /// How to fix it, in words.
+    pub suggested_fix: Option<String>,
+    /// Exact replacement for lines `line..=end_line`, if one is certain.
+    pub suggestion: Option<String>,
+    /// Confidence from 0.0 to 1.0.
+    pub confidence: f32,
+    /// Stable identity across line shifts, used for dedupe.
+    pub fingerprint: String,
+}
+
+impl Category {
+    /// The kebab-case name used in config and output.
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::Bug => "bug",
+            Self::Security => "security",
+            Self::Performance => "performance",
+            Self::Style => "style",
+            Self::TestGap => "test-gap",
+        }
+    }
+}
+
+impl Severity {
+    /// The lowercase name used in config and output.
+    pub fn as_str(self) -> &'static str {
+        match self {
+            Self::Info => "info",
+            Self::Low => "low",
+            Self::Medium => "medium",
+            Self::High => "high",
+            Self::Critical => "critical",
+        }
+    }
+}
