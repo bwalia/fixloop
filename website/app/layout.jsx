@@ -8,6 +8,7 @@ const mono = IBM_Plex_Mono({ subsets: ['latin'], weight: ['400', '500', '600'], 
 
 const SITE = 'https://fixloop.run';
 const TITLE = 'Fixloop: AI code review that closes the bug loop';
+const OG_IMAGE = { url: '/og.png', width: 1200, height: 627, alt: 'Fixloop: AI code review that closes the bug loop' };
 const DESCRIPTION =
   'Open source AI agent that reviews pull requests on the changed lines, with fixes you can apply. Any model: Claude, OpenAI, Gemini or fully local. Self-hosted, Apache-2.0.';
 
@@ -16,8 +17,8 @@ export const metadata = {
   title: TITLE,
   description: DESCRIPTION,
   alternates: { canonical: '/' },
-  openGraph: { type: 'website', url: SITE, siteName: 'Fixloop', title: TITLE, description: DESCRIPTION },
-  twitter: { card: 'summary', title: TITLE, description: DESCRIPTION },
+  openGraph: { type: 'website', url: SITE, siteName: 'Fixloop', title: TITLE, description: DESCRIPTION, images: [OG_IMAGE] },
+  twitter: { card: 'summary_large_image', title: TITLE, description: DESCRIPTION, images: [OG_IMAGE] },
   icons: { icon: '/icon.svg' },
 };
 
