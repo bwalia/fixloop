@@ -8,8 +8,9 @@ Fixloop runs on GitHub as a **GitHub App**. It asks for the smallest set of perm
 | Contents | read | Read changed files, `.fixloop.yaml` and team rules |
 | Pull requests | write | Post review comments |
 | Checks | write | Report pass / warn / fail |
+| Issues | read | Required by GitHub to receive `issue_comment` events (`/fixloop review`) |
 
-Events: `pull_request` (opened, updated, reopened, ready for review) and `issue_comment` (for `/fixloop review`). Issue filing in a later release will ask for `issues: write`. GitHub then asks installation owners to approve the change.
+Events: `pull_request` (opened, updated, reopened, ready for review) and `issue_comment` (for `/fixloop review`). Issue filing in a later release will raise Issues to `write`. GitHub then asks installation owners to approve the change.
 
 ## 1. Create the App
 

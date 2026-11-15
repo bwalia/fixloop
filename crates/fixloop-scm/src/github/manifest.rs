@@ -9,7 +9,9 @@ use url::Url;
 use crate::github::client::GithubError;
 
 /// The manifest for a Fixloop App with the minimum permissions the
-/// Reviewer needs. Issue filing (Phase 3) will add `issues: write`.
+/// Reviewer needs. `issues: read` is required by GitHub to subscribe to
+/// `issue_comment` (the `/fixloop review` command). Issue filing (Phase 3)
+/// will raise it to `issues: write`.
 pub fn manifest(name: &str, redirect_url: &Url, webhook_url: Option<&Url>) -> Value {
     json!({
         "name": name,
@@ -28,6 +30,7 @@ pub fn manifest(name: &str, redirect_url: &Url, webhook_url: Option<&Url>) -> Va
             "contents": "read",
             "pull_requests": "write",
             "checks": "write",
+            "issues": "read",
         },
         "default_events": ["pull_request", "issue_comment"],
     })
@@ -105,8 +108,13 @@ mod tests {
     fn manifest_has_least_privilege() {
         let m = manifest("fx", &Url::parse("http://127.0.0.1:1/cb").unwrap(), None);
         let perms = m["default_permissions"].as_object().unwrap();
-        assert_eq!(perms.len(), 4);
+        assert_eq!(perms.len(), 5);
         assert_eq!(perms["contents"], "read");
+        // GitHub rejects the manifest if `issue_comment` is subscribed
+        // without at least `issues: read`.
+        assert_eq!(perms["issues"], "read");
+        let events: Vec<_> = m["default_events"].as_array().unwrap().iter().collect();
+        assert!(events.iter().any(|e| *e == "issue_comment"));
         assert!(perms.get("administration").is_none());
         assert_eq!(m["hook_attributes"]["active"], false);
         assert_eq!(m["public"], false);
