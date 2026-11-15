@@ -1,4 +1,8 @@
-//! Reviewer, Fixer and Bug Fixer agents, prompts and context building.
-//!
-//! This crate is a placeholder. Its implementation is planned for Phase 2
-//! (see `docs/PLAN.md`).
+//! Fixloop's agents. Phase 2 ships the Reviewer; the Fixer and Bug Fixer
+//! follow in Phase 4.
+
+pub mod diff;
+pub mod error;
+pub mod reviewer;
+
+pub use error::ReviewError;
