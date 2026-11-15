@@ -26,7 +26,7 @@ fixloop config validate-repo      # checks it
 
 ## Build from source
 
-Requires Rust 1.89 or newer.
+Requires Rust 1.94 or newer.
 
 ```sh
 cargo build --workspace
