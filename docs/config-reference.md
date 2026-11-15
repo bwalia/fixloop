@@ -22,6 +22,7 @@ Unknown keys are rejected so that typos are caught early.
 |---|---|---|
 | `bind` | `127.0.0.1:8080` | Address to listen on |
 | `role` | `all` | `all`, `api` or `worker` |
+| `workers` | `2` | Concurrent job workers in this process |
 
 ### `database`
 | Key | Default | Description |
@@ -68,6 +69,16 @@ fixloop --config fixloop.yaml llm list                 # models, routes, allowed
 fixloop --config fixloop.yaml llm test                 # send a prompt through the review route
 fixloop --config fixloop.yaml llm test --model local --tool   # check tool calling
 ```
+
+### `github`
+Unset means GitHub integration is off. See [GitHub setup](github.md).
+
+| Key | Default | Description |
+|---|---|---|
+| `app_id` | | The GitHub App's id |
+| `private_key_path` | | Path to the App's private key (PEM) |
+| `webhook_secret_env` | `FIXLOOP_GITHUB_WEBHOOK_SECRET` | Name of the environment variable holding the webhook secret |
+| `api_url` | `https://api.github.com` | Change for GitHub Enterprise Server |
 
 ### `sandbox`
 | Key | Default | Description |

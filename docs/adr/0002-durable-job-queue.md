@@ -1,6 +1,6 @@
 # ADR-0002: Durable job queue in the database (Postgres, SQLite fallback)
 
-* Status: Proposed
+* Status: Accepted (implemented in Phase 2)
 * Date: 2026-11-14
 
 ## Context
@@ -23,3 +23,12 @@ Implement our own queue on the `job` table in `fixloop-store`:
 
 ## Consequences
 Throughput is bounded by Postgres, but that is well above our needs: jobs are minutes long and LLM-bound. The queue is behind a `JobQueue` trait, so a broker backend could be added later.
+
+## Implementation notes (Phase 2)
+* One code path for both databases through sqlx's `Any` driver. Postgres uses `FOR UPDATE SKIP LOCKED` in the lease query; SQLite runs with a single connection, which makes the lease `UPDATE` atomic.
+* Migrations are embedded and versioned (`fixloop_migrations` table). On Postgres the table is locked so two starting servers cannot race.
+* Leases last 120 s and are extended every 30 s. Each worker loop reclaims expired leases, and a job that runs out of attempts while its worker is gone fails with "worker stopped responding".
+* Retries back off 30 s, 2 m, 8 m, … up to 1 h. Errors are classed retryable (model or GitHub outages, rate limits) or permanent (bad config, missing access).
+* Webhook deliveries are deduplicated with the idempotency key `github:<X-GitHub-Delivery>`.
+* `LISTEN/NOTIFY` wake-ups are not implemented yet. Idle workers poll every 2 s, which is fine at current scale.
+* Tests run on SQLite always and on Postgres in CI, each test in its own fresh database.

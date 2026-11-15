@@ -36,6 +36,34 @@ pub struct FixloopConfig {
     pub llm: LlmConfig,
     /// Sandbox runner selection.
     pub sandbox: SandboxConfig,
+    /// GitHub App settings. Unset means GitHub integration is off.
+    pub github: Option<GithubConfig>,
+}
+
+/// GitHub App settings.
+#[derive(Debug, Clone, PartialEq, Serialize, Deserialize)]
+#[serde(deny_unknown_fields)]
+pub struct GithubConfig {
+    /// The App's numeric id.
+    pub app_id: u64,
+    /// Path to the App's private key (PEM).
+    pub private_key_path: std::path::PathBuf,
+    /// Name of the environment variable holding the webhook secret.
+    #[serde(default = "default_webhook_secret_env")]
+    pub webhook_secret_env: String,
+    /// REST API root. Change for GitHub Enterprise Server.
+    #[serde(default = "default_github_api")]
+    pub api_url: Url,
+}
+
+fn default_webhook_secret_env() -> String {
+    "FIXLOOP_GITHUB_WEBHOOK_SECRET".into()
+}
+
+fn default_github_api() -> Url {
+    // A constant, known-valid URL.
+    #[allow(clippy::expect_used)]
+    Url::parse("https://api.github.com").expect("valid constant URL")
 }
 
 /// Which parts of Fixloop this process runs.
@@ -59,6 +87,8 @@ pub struct ServerConfig {
     pub bind: String,
     /// Process role.
     pub role: Role,
+    /// Concurrent job workers in this process (roles `all` and `worker`).
+    pub workers: u32,
 }
 
 impl Default for ServerConfig {
@@ -66,6 +96,7 @@ impl Default for ServerConfig {
         Self {
             bind: "127.0.0.1:8080".into(),
             role: Role::All,
+            workers: 2,
         }
     }
 }

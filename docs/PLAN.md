@@ -229,7 +229,7 @@ Decided (2026-11-14):
 * Copyright holder: "The Fixloop Authors".
 * Container registry: GHCR under the project org (`ghcr.io/bwalia/fixloop`).
 * Security reports: GitHub private vulnerability reporting (no email needed).
-* MSRV: Rust 1.89 (required by `serde-saphyr`), edition 2024. CI checks it.
+* MSRV: Rust 1.94 (raised from 1.89 in Phase 2; required by sqlx 0.9), edition 2024. CI checks it.
 * YAML: `serde-saphyr`, because `serde_yaml` is deprecated. figment is used for layering and env overrides only.
 
 Still open:

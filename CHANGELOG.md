@@ -4,6 +4,38 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+### Phase 2: Reviewer
+
+#### Added
+- **Reviewer agent** (`fixloop-agents`):
+  - Diff parsing with new-file line numbers.
+  - A versioned prompt that keeps all repository content in per-request data markers.
+  - Structured findings through a `report_findings` tool.
+  - Validation: findings must point at changed lines; confidence and severity thresholds; dedupe; at most 25 findings.
+  - Model text is sanitised (no @-mentions, no `/fixloop` commands, no secrets).
+  - Suggestions keep the original indentation.
+- **Secret scanning** (`fixloop-core::secrets`): diffs are redacted before any model call, committed secrets become critical findings, and everything posted is scanned.
+- **GitHub App** (`fixloop-scm`):
+  - App registration in one click with `fixloop github create-app` (manifest flow, least-privilege permissions).
+  - Installation tokens, PR, diff and file reads, check runs, inline reviews (falling back to a single review body if GitHub rejects a position), comments, and permission checks.
+  - Webhook signature verification.
+- **Store** (`fixloop-store`): PostgreSQL and SQLite through one code path; embedded migrations; a durable job queue with idempotent enqueue, leases, heartbeats, retries with backoff and crash recovery; review, finding and audit records.
+- **Server** (`fixloop-server`): `POST /webhooks/github`, `/healthz`, `/readyz`, and workers that run reviews and record results.
+- **CLI**:
+  - `fixloop serve`.
+  - `fixloop review`: local changes, or `--pr <url>` as a dry run, `--post` to publish. Exits 3 on high or critical findings.
+  - `fixloop github create-app`.
+- `.fixloop.yaml` and rules are read from the PR's **base** commit. `/fixloop review` only works for users with write access.
+- `server.workers` config; `github` config section.
+- Docs: GitHub setup guide; ADR-0006 (thin GitHub client).
+
+#### Changed
+- Minimum supported Rust version is now 1.94 (required by sqlx 0.9).
+
+#### Security
+- sqlx uses rustls with the system certificate store, which keeps CDLA-licensed `webpki-roots` out of the build.
+- RUSTSEC-2026-0459 (bundled SQLite) is ignored with a recorded reason. The precondition (opening a database and `-wal` written by a less-trusted party) does not apply to Fixloop, and the fix needs a newer sqlx.
+
 ### Phase 1: LLM layer
 
 #### Added
