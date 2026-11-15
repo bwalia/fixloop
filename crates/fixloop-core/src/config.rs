@@ -432,11 +432,20 @@ pub struct SandboxConfig {
     pub fallback: Option<RunnerKind>,
 }
 
+/// Environment overrides: only `FIXLOOP_<SECTION>__<KEY>` variables. Other
+/// `FIXLOOP_*` variables, such as `FIXLOOP_CONFIG` or the default webhook
+/// secret `FIXLOOP_GITHUB_WEBHOOK_SECRET`, are not configuration keys.
+fn env_overrides() -> Env {
+    Env::prefixed(ENV_PREFIX)
+        .filter(|k| k.as_str().contains("__"))
+        .split("__")
+}
+
 impl FixloopConfig {
     /// Load configuration from defaults, an optional YAML file and the
     /// process environment, then validate it.
     pub fn load(path: Option<&Path>) -> Result<Self, ConfigError> {
-        Self::load_with(path, Env::prefixed(ENV_PREFIX).split("__"))
+        Self::load_with(path, env_overrides())
     }
 
     fn load_with(path: Option<&Path>, env: Env) -> Result<Self, ConfigError> {
@@ -706,6 +715,19 @@ sandbox: { runner: kubernetes, fallback: docker }
             jail.set_env("FIXLOOP_SERVER__BIND", "127.0.0.1:2");
             let c = FixloopConfig::load(Some(Path::new("f.yaml"))).map_err(|e| e.to_string())?;
             assert_eq!(c.server.bind, "127.0.0.1:2");
+            Ok(())
+        });
+    }
+
+    #[test]
+    #[allow(clippy::result_large_err)] // figment::Error is large; test-only
+    fn non_override_env_vars_are_ignored() {
+        figment::Jail::expect_with(|jail| {
+            jail.set_env("FIXLOOP_CONFIG", "/etc/fixloop/fixloop.yaml");
+            jail.set_env("FIXLOOP_GITHUB_WEBHOOK_SECRET", "s3cret");
+            jail.set_env("FIXLOOP_DATABASE__URL", "sqlite://x.db");
+            let c = FixloopConfig::load(None).map_err(|e| e.to_string())?;
+            assert_eq!(c.database.url, "sqlite://x.db");
             Ok(())
         });
     }
