@@ -1,0 +1,21 @@
+# Example only (not in kustomization.yaml): GitHub must reach
+# https://<host>/webhooks/github. Adjust the class, host and TLS issuer.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: fixloop
+  namespace: fixloop
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts: [fixloop.example.com]
+      secretName: fixloop-tls
+  rules:
+    - host: fixloop.example.com
+      http:
+        paths:
+          - path: /webhooks/github
+            pathType: Exact
+            backend: { service: { name: fixloop, port: { name: http } } }

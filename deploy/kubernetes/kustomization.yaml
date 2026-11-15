@@ -1,0 +1,21 @@
+# Fixloop on Kubernetes. Render with `kubectl kustomize deploy/kubernetes`.
+# Create the `fixloop` Secret first (see README.md); it is never committed.
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: fixloop
+labels:
+  - pairs:
+      app.kubernetes.io/name: fixloop
+      app.kubernetes.io/part-of: fixloop
+    includeSelectors: true
+resources:
+  - namespace.yaml
+  - serviceaccount.yaml
+  - configmap.yaml
+  - pvc.yaml
+  - deployment.yaml
+  - service.yaml
+  - networkpolicy.yaml
+images:
+  - name: ghcr.io/bwalia/fixloop
+    newTag: edge

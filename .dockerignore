@@ -1,0 +1,6 @@
+target/
+.git/
+**/*.db
+**/*.pem
+**/*.private-key.pem
+.env*

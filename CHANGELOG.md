@@ -4,6 +4,15 @@ All notable changes to this project are documented here. The format follows [Kee
 
 ## [Unreleased]
 
+### Deployment
+
+#### Added
+- Container image `ghcr.io/bwalia/fixloop` (distroless, non-root, amd64 and arm64), built by `.github/workflows/image.yml`: `edge` from `main`, semver tags from `v*` tags, with build provenance.
+- Kubernetes manifests in `deploy/kubernetes/` (kustomize): restricted Pod Security, read-only root filesystem, probes, SQLite volume or Postgres via Secret, example Ingress.
+
+#### Fixed
+- `FIXLOOP_CONFIG` and `FIXLOOP_GITHUB_WEBHOOK_SECRET` were read as configuration overrides and made loading fail. Only `FIXLOOP_<SECTION>__<KEY>` variables are overrides now.
+
 ### Phase 2: Reviewer
 
 #### Added

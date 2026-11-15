@@ -1,0 +1,65 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fixloop
+spec:
+  # One replica while the database is SQLite on a ReadWriteOnce volume.
+  # With Postgres, raise this; the job queue is safe for many workers.
+  replicas: 1
+  strategy:
+    type: Recreate
+  template:
+    spec:
+      serviceAccountName: fixloop
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 65532
+        runAsGroup: 65532
+        fsGroup: 65532
+        seccompProfile: { type: RuntimeDefault }
+      terminationGracePeriodSeconds: 150
+      containers:
+        - name: fixloop
+          image: ghcr.io/bwalia/fixloop
+          args: ["--config", "/etc/fixloop/fixloop.yaml", "serve"]
+          ports:
+            - { name: http, containerPort: 8080 }
+          env:
+            - name: ANTHROPIC_API_KEY
+              valueFrom: { secretKeyRef: { name: fixloop, key: anthropic-api-key } }
+            - name: FIXLOOP_GITHUB_WEBHOOK_SECRET
+              valueFrom: { secretKeyRef: { name: fixloop, key: github-webhook-secret } }
+            - name: FIXLOOP_DATABASE__URL
+              valueFrom: { secretKeyRef: { name: fixloop, key: database-url, optional: true } }
+          readinessProbe:
+            httpGet: { path: /readyz, port: http }
+            periodSeconds: 10
+          livenessProbe:
+            httpGet: { path: /healthz, port: http }
+            initialDelaySeconds: 10
+            periodSeconds: 20
+          resources:
+            requests: { cpu: 100m, memory: 128Mi }
+            limits: { memory: 512Mi }
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities: { drop: [ALL] }
+          volumeMounts:
+            - { name: config, mountPath: /etc/fixloop, readOnly: true }
+            - { name: github-key, mountPath: /var/run/secrets/fixloop/github, readOnly: true }
+            - { name: data, mountPath: /var/lib/fixloop }
+            - { name: tmp, mountPath: /tmp }
+      volumes:
+        - name: config
+          configMap: { name: fixloop-config }
+        - name: github-key
+          secret:
+            secretName: fixloop
+            items: [{ key: github-private-key, path: private-key.pem }]
+            defaultMode: 0400
+        - name: data
+          persistentVolumeClaim: { claimName: fixloop-data }
+        - name: tmp
+          emptyDir: {}

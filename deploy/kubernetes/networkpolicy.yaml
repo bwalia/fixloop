@@ -1,0 +1,12 @@
+# Inbound only to the HTTP port. Egress is left open because model and
+# GitHub API hosts vary; Fixloop's own egress allowlist still applies.
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: fixloop
+spec:
+  podSelector: {}
+  policyTypes: [Ingress]
+  ingress:
+    - ports:
+        - { port: 8080, protocol: TCP }

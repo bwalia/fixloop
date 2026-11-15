@@ -11,7 +11,7 @@ Check them with `fixloop config validate` and `fixloop config validate-repo`. Pr
 
 ## Server config (`fixloop.yaml`)
 
-Pass the file with `--config` or `FIXLOOP_CONFIG`. Every key can be overridden by an environment variable named `FIXLOOP_<SECTION>__<KEY>` (double underscore between levels), e.g. `FIXLOOP_SERVER__BIND=0.0.0.0:8080`.
+Pass the file with `--config` or `FIXLOOP_CONFIG`. Every key can be overridden by an environment variable named `FIXLOOP_<SECTION>__<KEY>` (double underscore between levels), e.g. `FIXLOOP_SERVER__BIND=0.0.0.0:8080`. Other `FIXLOOP_*` variables without a double underscore (such as `FIXLOOP_CONFIG`) are not overrides.
 
 Precedence, lowest first: built-in defaults → file → environment.
 
