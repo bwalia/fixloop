@@ -1,4 +1,4 @@
-import { Logo, LogoMark } from './components/Logo';
+import { Logo } from './components/Logo';
 import ThemeToggle from './components/ThemeToggle';
 import CopyCommand from './components/CopyCommand';
 import LoopDiagram from './components/LoopDiagram';
@@ -235,26 +235,6 @@ function CtaBand() {
   );
 }
 
-function Footer() {
-  return (
-    <footer className="site-footer">
-      <div className="container footer-inner">
-        <div className="footer-brand">
-          <LogoMark size={22} /> <span>Fixloop</span>
-        </div>
-        <nav aria-label="Footer" className="footer-nav">
-          <a href={REPO}>GitHub</a>
-          <a href={DOCS}>Getting started</a>
-          <a href={`${REPO}/blob/main/docs/config-reference.md`}>Configuration</a>
-          <a href={`${REPO}/blob/main/docs/security/threat-model.md`}>Security</a>
-          <a href={`${REPO}/blob/main/CONTRIBUTING.md`}>Contribute</a>
-        </nav>
-        <p className="footer-legal">© The Fixloop Authors. Apache License 2.0.</p>
-      </div>
-    </footer>
-  );
-}
-
 export default function Home() {
   return (
     <>
@@ -289,7 +269,6 @@ export default function Home() {
         <Roadmap />
         <CtaBand />
       </main>
-      <Footer />
     </>
   );
 }
