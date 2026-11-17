@@ -1,6 +1,7 @@
 import { Bricolage_Grotesque, Instrument_Sans, IBM_Plex_Mono } from 'next/font/google';
 import './theme.css';
 import './globals.css';
+import Footer from './components/Footer';
 
 const display = Bricolage_Grotesque({ subsets: ['latin'], variable: '--font-fx-display', display: 'swap', axes: ['opsz'] });
 const body = Instrument_Sans({ subsets: ['latin'], variable: '--font-fx-body', display: 'swap' });
@@ -38,7 +39,10 @@ export default function RootLayout({ children }) {
       <head>
         <script dangerouslySetInnerHTML={{ __html: THEME_SCRIPT }} />
       </head>
-      <body>{children}</body>
+      <body>
+        {children}
+        <Footer />
+      </body>
     </html>
   );
 }
