@@ -1,0 +1,96 @@
+# Releases the Fixloop iOS app: TestFlight, App Store listing and review submission.
+#
+# Manual only (Actions -> ios-release -> Run workflow). Every run waits for approval
+# on the `app-store` environment, which is the only place the App Store Connect API
+# key is stored. Runs on GitHub-hosted macOS, never a self-hosted runner, because
+# this repository is public. See docs/ios-release.md.
+name: ios-release
+
+on:
+  workflow_dispatch:
+    inputs:
+      target:
+        description: What to do
+        required: true
+        type: choice
+        default: store_status
+        options:
+          - store_status   # read-only: what the listing still needs
+          - testflight     # build, sign, upload to TestFlight (internal)
+          - metadata       # upload listing text
+          - screenshots    # upload screenshots
+          - app_store      # submit the TestFlight build for review
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ios-release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: ios -> ${{ inputs.target }}
+    if: github.ref == 'refs/heads/main'
+    runs-on: macos-26
+    timeout-minutes: 60
+    environment: app-store
+    defaults:
+      run:
+        working-directory: ios
+    env:
+      LANG: en_US.UTF-8
+      LC_ALL: en_US.UTF-8
+      ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+      ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      - name: Write App Store Connect API key
+        env:
+          ASC_PRIVATE_KEY_B64: ${{ secrets.ASC_PRIVATE_KEY_B64 }}
+        run: |
+          set -euo pipefail
+          for v in ASC_KEY_ID ASC_ISSUER_ID ASC_PRIVATE_KEY_B64; do
+            [ -n "${!v:-}" ] || { echo "::error::Secret $v is not set on the app-store environment"; exit 1; }
+          done
+          key="$RUNNER_TEMP/AuthKey_${ASC_KEY_ID}.p8"
+          ( umask 077; printf '%s' "$ASC_PRIVATE_KEY_B64" | base64 --decode > "$key" )
+          grep -q "BEGIN PRIVATE KEY" "$key" || { echo "::error::ASC_PRIVATE_KEY_B64 is not a base64 .p8 key"; exit 1; }
+          echo "ASC_KEY_FILEPATH=$key" >> "$GITHUB_ENV"
+
+      - name: Install tools
+        run: |
+          set -euo pipefail
+          brew install xcodegen
+          bundle config set --local path vendor/bundle
+          bundle install --jobs 4
+
+      - name: Run
+        env:
+          TARGET: ${{ inputs.target }}
+        run: |
+          set -euo pipefail
+          case "$TARGET" in
+            store_status) bundle exec fastlane ios store_status ;;
+            testflight)   bundle exec fastlane ios beta ;;
+            metadata)     bundle exec fastlane ios upload_metadata ;;
+            screenshots)  bundle exec fastlane ios upload_screenshots ;;
+            app_store)    bundle exec fastlane ios release ;;
+            *) echo "::error::unknown target $TARGET"; exit 1 ;;
+          esac
+
+      - name: Keep the IPA
+        if: inputs.target == 'testflight'
+        uses: actions/upload-artifact@v7
+        with:
+          name: fixloop-ios-ipa
+          path: ios/build/Fixloop.ipa
+          if-no-files-found: warn
+          retention-days: 14
+
+      - name: Remove signing material
+        if: always()
+        run: rm -f "${ASC_KEY_FILEPATH:-}" "$RUNNER_TEMP"/*.p8

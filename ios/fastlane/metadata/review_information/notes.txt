@@ -1,0 +1,3 @@
+No account is needed to review the app. On the first screen, tap "Try with sample reviews". This shows built-in sample data on every screen: the review inbox, severity filters, a pull request, a finding with its suggested fix, and Settings.
+
+Signing in with a real account requires a GitHub account with repositories reviewed by a self-hosted Fixloop reviewer. The app only reads from GitHub's API; it has no server of its own.

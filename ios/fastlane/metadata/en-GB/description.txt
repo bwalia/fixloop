@@ -1,0 +1,14 @@
+Fixloop is an open source AI agent that reviews pull requests. This app puts its findings in your pocket.
+
+Sign in with GitHub and see every pull request Fixloop has reviewed for you, newest first, with a count of findings by severity. Open one to read each finding: what's wrong, where it is, how confident Fixloop is, and the fix it suggests, including replacement code you can copy.
+
+• One inbox for every Fixloop review on pull requests you're involved in
+• Filter by severity: critical, high, medium, low and info
+• Read the reasoning, the suggested fix and the replacement code for each finding
+• Jump straight to the comment on GitHub to commit the fix
+• Optional notifications when a new review lands, checked on your device
+• Try it without an account using built-in sample reviews
+
+Private by design: the app talks only to GitHub. Your token stays in the iOS keychain on your device, and there is no Fixloop account, no analytics and no tracking.
+
+The app shows reviews from the Fixloop reviewer, which you run on your own infrastructure with the model of your choice. Learn how to set it up at fixloop.run.

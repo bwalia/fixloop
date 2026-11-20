@@ -1,0 +1,15 @@
+*.xcodeproj/
+build/
+DerivedData/
+*.ipa
+*.dSYM.zip
+vendor/bundle/
+.bundle/
+fastlane/report.xml
+fastlane/test_output/
+fastlane/README.md
+# Never commit signing material
+*.p8
+*.p12
+*.cer
+*.mobileprovision

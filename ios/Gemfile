@@ -1,0 +1,14 @@
+source "https://rubygems.org"
+
+# fastlane drives the TestFlight upload, the App Store listing and submission.
+# See fastlane/Fastfile, .github/workflows/ios-release.yml and docs/ios-release.md.
+gem "fastlane", "~> 2.240"
+# Ruby 3.4+/4.x no longer ship these as default gems; fastlane still needs them.
+gem "ostruct"
+gem "logger"
+gem "csv"
+gem "base64"
+gem "mutex_m"
+gem "abbrev"
+gem "nkf"
+gem "rexml"
