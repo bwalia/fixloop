@@ -1,0 +1,250 @@
+# Fixloop iOS: build, TestFlight, listing and App Store submission.
+#
+# Same stages as the Fishers / GullyCricket pipeline (bwalia/fishers docs/IOS_RELEASE.md):
+#
+#   test            simulator build + unit tests
+#   beta            archive, sign, upload to TestFlight (internal testers only)
+#   store_status    read-only: what the listing is still missing
+#   metadata        upload fastlane/metadata as the listing text (refuses placeholders)
+#   screenshots     upload fastlane/screenshots
+#   release         attach the build already on TestFlight and submit it for review
+#
+# Differences from Fishers, on purpose:
+#   * Runs on GitHub-hosted macOS runners, not the self-hosted Mac Studio: this repo
+#     is public and takes outside contributions.
+#   * Signing is cloud-managed by Xcode using the App Store Connect API key
+#     (-allowProvisioningUpdates). No certificate or private key is exported into
+#     CI secrets. The API key needs the Admin role for this.
+#   * No demo account: App Review uses the app's built-in sample mode.
+
+require "shellwords"
+
+default_platform(:ios)
+
+APP_ID = "run.fixloop.app"
+TEAM_ID = "PAS2QUVJHC"
+PROJECT = File.expand_path("../Fixloop.xcodeproj", __dir__)
+BUILD_DIR = File.expand_path("../build", __dir__)
+IPA = File.join(BUILD_DIR, "Fixloop.ipa")
+METADATA = File.expand_path("metadata", __dir__)
+SCREENSHOTS = File.expand_path("screenshots", __dir__)
+PLACEHOLDER = /\[[^\]]+\]/
+
+# The App Store Connect API key. CI writes the .p8 from a secret into a temp file
+# and points ASC_KEY_FILEPATH at it.
+def asc_api_key
+  # duration 500: App Store Connect rejects the 1200 s maximum often enough to matter
+  # (fastlane#29468), same as Fishers.
+  app_store_connect_api_key(
+    key_id: ENV.fetch("ASC_KEY_ID").strip,
+    issuer_id: ENV.fetch("ASC_ISSUER_ID").strip,
+    key_filepath: ENV.fetch("ASC_KEY_FILEPATH").strip,
+    duration: 500,
+    in_house: false
+  )
+end
+
+def generate_project!
+  sh("cd .. && xcodegen generate --quiet")
+end
+
+# Every text value in the listing that is still a bracketed placeholder.
+def placeholders
+  Dir.glob(File.join(METADATA, "**", "*.txt")).filter_map do |path|
+    text = File.read(path)
+    next unless text.match?(PLACEHOLDER)
+    "#{path.delete_prefix("#{METADATA}/")}: #{text.strip}"
+  end
+end
+
+def app!(key)
+  Spaceship::ConnectAPI.token = Spaceship::ConnectAPI::Token.create(**key)
+  app = Spaceship::ConnectAPI::App.find(APP_ID)
+  UI.user_error!(
+    "No App Store Connect app for #{APP_ID}. Create it once in a browser: see docs/ios-release.md, step 1."
+  ) if app.nil?
+  app
+end
+
+platform :ios do
+  desc "Simulator build and unit tests"
+  lane :test do
+    generate_project!
+    run_tests(
+      project: PROJECT,
+      scheme: "Fixloop",
+      only_testing: ["FixloopTests"],
+      device: ENV.fetch("SIMULATOR", "iPhone 17"),
+      result_bundle: true,
+      output_directory: File.join(BUILD_DIR, "test")
+    )
+  end
+
+  desc "Archive, sign and upload to TestFlight (internal testers only)"
+  lane :beta do
+    key = asc_api_key
+    app!(key)
+    generate_project!
+
+    version = get_version_number_from_xcodeproj_or_project_yml
+    latest = latest_testflight_build_number(api_key: key, app_identifier: APP_ID, version: version, initial_build_number: 0)
+    build_number = (latest.to_i + 1).to_s
+    UI.message("Building #{version} (#{build_number})")
+
+    build_app(
+      project: PROJECT,
+      scheme: "Fixloop",
+      configuration: "Release",
+      clean: true,
+      output_directory: BUILD_DIR,
+      output_name: "Fixloop.ipa",
+      export_method: "app-store-connect",
+      export_team_id: TEAM_ID,
+      xcargs: [
+        "CURRENT_PROJECT_VERSION=#{build_number}",
+        "-allowProvisioningUpdates",
+        "-authenticationKeyPath #{ENV.fetch('ASC_KEY_FILEPATH').shellescape}",
+        "-authenticationKeyID #{ENV.fetch('ASC_KEY_ID').strip}",
+        "-authenticationKeyIssuerID #{ENV.fetch('ASC_ISSUER_ID').strip}"
+      ].join(" "),
+      export_xcargs: [
+        "-allowProvisioningUpdates",
+        "-authenticationKeyPath #{ENV.fetch('ASC_KEY_FILEPATH').shellescape}",
+        "-authenticationKeyID #{ENV.fetch('ASC_KEY_ID').strip}",
+        "-authenticationKeyIssuerID #{ENV.fetch('ASC_ISSUER_ID').strip}"
+      ].join(" ")
+    )
+
+    upload_to_testflight(
+      api_key: key,
+      ipa: IPA,
+      app_identifier: APP_ID,
+      skip_waiting_for_build_processing: false,
+      distribute_external: false,
+      submit_beta_review: false,
+      uses_non_exempt_encryption: false
+    )
+    UI.success("Fixloop #{version} (#{build_number}) is on TestFlight for internal testers.")
+  end
+
+  desc "Read-only: what the App Store listing still needs"
+  lane :store_status do
+    key = asc_api_key
+    problems = []
+
+    begin
+      app = app!(key)
+      UI.success("App Store Connect app: #{app.name} (#{app.id})")
+      builds = app.get_builds(sort: "-uploadedDate", limit: 5).select { |b| b.processing_state == "VALID" }
+      problems << "No processed build on TestFlight yet (run target: testflight)" if builds.empty?
+      version = app.get_edit_app_store_version
+      problems << "No version in Prepare for Submission" if version.nil?
+    rescue FastlaneCore::Interface::FastlaneError => e
+      problems << e.message
+    end
+
+    problems.concat(placeholders.map { |p| "Placeholder still in listing: #{p}" })
+
+    shots = Dir.glob(File.join(SCREENSHOTS, "*", "*.png"))
+    problems << "No screenshots in fastlane/screenshots" if shots.empty?
+
+    problems << "Set by hand in App Store Connect (no API): App Privacy answers -> 'Data Not Collected'"
+    problems << "Set by hand in App Store Connect (no API): Age Rating questionnaire"
+
+    problems.each { |p| UI.important(p) }
+    UI.message("#{problems.size} item(s). The last two are always listed; tick them off yourself.")
+  end
+
+  desc "Upload the listing text (no binary, no screenshots, no submission)"
+  lane :upload_metadata do
+    left = placeholders
+    UI.user_error!("Fill these in first:\n  #{left.join("\n  ")}") unless left.empty?
+    key = asc_api_key
+    deliver(
+      api_key: key,
+      app_identifier: APP_ID,
+      platform: "ios",
+      metadata_path: METADATA,
+      skip_binary_upload: true,
+      skip_screenshots: true,
+      skip_app_version_update: false,
+      submit_for_review: false,
+      force: true,
+      precheck_include_in_app_purchases: false
+    )
+  end
+
+  desc "Upload the screenshots (no binary, no text, no submission)"
+  lane :upload_screenshots do
+    key = asc_api_key
+    deliver(
+      api_key: key,
+      app_identifier: APP_ID,
+      platform: "ios",
+      screenshots_path: SCREENSHOTS,
+      overwrite_screenshots: true,
+      skip_binary_upload: true,
+      skip_metadata: true,
+      skip_app_version_update: true,
+      submit_for_review: false,
+      force: true,
+      precheck_include_in_app_purchases: false
+    )
+  end
+
+  desc "Attach the build already on TestFlight and submit it for review"
+  lane :release do
+    # Promote, do not rebuild: what ships is the binary that was tested.
+    key = asc_api_key
+    app = app!(key)
+
+    version = app.get_edit_app_store_version
+    UI.user_error!("No version in Prepare for Submission for #{APP_ID}. Run target: metadata first.") if version.nil?
+
+    attached = begin
+      version.get_build
+    rescue StandardError
+      nil
+    end
+
+    if attached
+      UI.message("Build #{attached.version} is already attached to #{version.version_string}")
+    else
+      processed = app.get_builds(includes: "preReleaseVersion", sort: "-uploadedDate", limit: 50)
+                     .select { |b| b.processing_state == "VALID" }
+      UI.user_error!("No processed build to promote. Send one to TestFlight first (target: testflight).") if processed.empty?
+
+      candidates = processed.select { |b| b.pre_release_version&.version == version.version_string }
+      UI.user_error!(
+        "No processed build on the #{version.version_string} train. Builds are on " \
+        "#{processed.map { |b| b.pre_release_version&.version }.compact.uniq.join(', ')}."
+      ) if candidates.empty?
+
+      attached = candidates.first
+      UI.message("Attaching build #{attached.version} to #{version.version_string}")
+      version.select_build(build_id: attached.id)
+    end
+
+    deliver(
+      api_key: key,
+      app_identifier: APP_ID,
+      platform: "ios",
+      submit_for_review: true,
+      automatic_release: false,
+      force: true,
+      skip_binary_upload: true,
+      skip_screenshots: true,
+      skip_metadata: true,
+      skip_app_version_update: true,
+      precheck_include_in_app_purchases: false,
+      submission_information: { add_id_info_uses_idfa: false }
+    )
+    UI.success("Submitted for review. Release is manual once Apple approves it.")
+  end
+end
+
+# MARKETING_VERSION lives in project.yml (the .xcodeproj is generated).
+def get_version_number_from_xcodeproj_or_project_yml
+  yml = File.read(File.expand_path("../project.yml", __dir__))
+  yml[/MARKETING_VERSION:\s*"?([\d.]+)"?/, 1] || UI.user_error!("MARKETING_VERSION not found in project.yml")
+end

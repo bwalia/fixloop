@@ -1,0 +1,3 @@
+// Client ID of the Fixloop GitHub App (Settings → Developer settings → GitHub Apps → fixloop → Client ID).
+// "Enable Device Flow" must be ticked on that app. Leave empty to offer token sign-in only.
+FIXLOOP_GITHUB_CLIENT_ID =
