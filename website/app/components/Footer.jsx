@@ -18,6 +18,7 @@ export default function Footer() {
           <a href={`${REPO}/blob/main/docs/security/threat-model.md`}>Security</a>
           <a href={`${REPO}/blob/main/CONTRIBUTING.md`}>Contribute</a>
           <a href="mailto:support@workstation.co.uk">support@workstation.co.uk</a>
+          <a href="/support">Support</a>
           <a href="/privacy">Privacy</a>
         </nav>
         <p className="footer-sponsor">

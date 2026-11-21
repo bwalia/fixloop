@@ -3,5 +3,6 @@ export default function sitemap() {
   return [
     { url: 'https://fixloop.run/', changeFrequency: 'weekly', priority: 1 },
     { url: 'https://fixloop.run/privacy', changeFrequency: 'yearly', priority: 0.3 },
+    { url: 'https://fixloop.run/support', changeFrequency: 'yearly', priority: 0.3 },
   ];
 }
